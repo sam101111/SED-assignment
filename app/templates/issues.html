@@ -1,0 +1,523 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+{% block mockData %}
+{% endblock %}
+<script type="text/javascript"></script>
+<div class="flex flex-col gap-3 w-10/12">
+  <div class="alert alert-primary hidden" role="alert" id="updateIssueAlert">
+    text here lol
+  </div>
+  <div class="toast-container position-fixed bottom-0 end-0 p-3">
+
+      <div id="tostResponse" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+          <strong class="me-auto" id="toastTitle">Bootstrap</strong>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastBody">
+          Hello, world! This is a toast message.
+        </div>
+      </div>
+    
+    </div>
+
+
+  {% block filters %}
+    <div>
+
+      {% block title %}
+        <h1 class="text-3xl">Your tickets</h1>
+      {% endblock %}
+
+        
+        <div class="flex flex-row w-6/12 gap-2">
+            
+            <div>
+            <label for="typeFilter" class="form-label">Issue type</label>  
+            <select onchange="onTypeFilter()" class="form-select "  id="typeFilter" aria-label="Select a issue type" aria-placeholder="Select issue type" >
+            <option selected disabled value="">Pick issue type</option>
+            <option value="account-and-access">Account and Access</option>
+            <option value="bug">Bug</option>
+            <option value="incident-report">Incident report</option>
+            <option value="service-request">Service request</option>
+          </select>
+        </div>
+        <div>
+            <label for="searchFilter" class="form-label">Search for issue</label> 
+          <input onchange="onSearchFilter()" type="email" class="form-control" id="searchFilter" placeholder="Title of issue">
+        </div>
+
+        <button onclick="clearFilter()" class="btn btn-primary w-32 mt-8">Clear</button>
+
+            
+
+      </div>
+    </div>
+    {% endblock %}
+
+  <div id="issueContainer">
+{% block issueBlock %}
+{% for element in issues %}
+{% set titleFormatted = element.title.replace("-", "").lower()%}
+{% set formattedType = element.type.value.replace(" ", "-").lower() %}
+<div name="{{titleFormatted}}" class="issue {{formattedType}} {{ titleFormatted }} {{element.id}} mt-2">
+
+
+{% if formattedType == "account-and-access" %}
+    {% set tag = "btn btn-warning" %}
+{% elif formattedType == "service-request"  %}
+{% set tag = "btn btn-info" %}
+{% else %}
+{% set tag = "btn btn-danger" %}
+{% endif %}
+
+
+{% include "components/card.html" %}
+
+{% endfor %} 
+{% endblock %}
+</div>
+</div>
+
+<div class="modal fade flex-none" id="updateModal" tabindex="-1" aria-labelledby="updateModal" aria-hidden="true">
+  <div class="modal-dialog">
+
+    <div class="modal-content">
+      <form class="flex flex-col gap-3 " id="updateForm">
+      
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="updateModal">Update issue</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body gap-4">
+       
+          
+          <div class="flex flex-row">
+              
+            <select name="type" class="form-control w-40"   aria-label="Select an issue type" aria-placeholder="Select issue type" >
+                      <option selected disabled value="">Pick issue type</option>
+                  <option value="Account and Access">Account and Access</option>
+                  <option value="Bug">Bug</option>
+                  <option value="Incident report">Incident report</option>
+                  <option value="Service request">Service request</option>
+                </select>
+            
+                <input name="title" type="text" class="form-control " aria-label="more info input" placeholder="What issue are you having ?" >
+            </div>
+            <textarea name="description" class="form-control mt-2"  placeholder="Add more detail about the issue here" rows="3" ></textarea>
+        
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary"data-bs-dismiss="modal">Save changes</button>
+      </div>
+    </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  const userId = JSON.parse('{{ user_id | tojson | safe }}');
+  const isAdmin = JSON.parse('{{ is_admin | tojson | safe }}');
+  const page = JSON.parse('{{ page | tojson | safe }}');
+
+  const getUsers = () => {
+    fetch(`/api/auth`, {
+      method: "GET",
+    })
+
+    .then(res => {
+      if (res.ok){
+        return res.json()
+        .then(data => {
+          
+          console.log(data)
+          refreshUsers(data)
+        })
+      }
+    }) .catch(err => {
+      console.log(err)
+    })
+
+  }
+  const refreshUsers = (users) => {
+    const container = document.getElementById('issueContainer');
+
+    container.innerHTML = '';
+  
+
+    users.forEach(user => {
+
+      const element = 
+      `
+      <div class="mt-2">
+<div class="card">
+    <h5 class="card-header"> ${user.email}</h5>
+    <div class="card-body">
+      <h5 class="card-title">
+        ${user.isAdmin == true ? '<span class="badge text-bg-info">Admin</span>' : '<span class="badge text-bg-secondary ">User</span>' }
+        
+  </h5>
+      
+    
+      ${isAdmin == true ? `<button  class="btn btn-danger"  name="${user.id}" onclick="deleteUser(name)">Delete</button>` : ''}
+      ${user.isAdmin == false && isAdmin == true ? `<button  class="btn btn-primary"  name="${user.id}" onclick="promote(name)">Promote to Admin</button>` : ''}
+      
+
+
+    </div>
+  
+</div>
+</div>
+</div>
+`
+      container.innerHTML += element;
+    })
+
+  }
+
+  const getIssues =  () => {
+    fetch(`/api/issues`, {
+      method: "GET",
+    })
+
+    .then(res => {
+      if (res.ok){
+        return res.json()
+        .then(data => {
+          
+          console.log(data)
+          refreshIssues(data)
+        })
+      }
+    }) .catch(err => {
+      console.log(err)
+    })
+  }
+
+  const getIssuesByUser =  () => {
+    
+    fetch(`/api/issues/${userId}`, {
+      method: "GET",
+    })
+
+    .then(res => {
+      if (res.ok){
+        return res.json()
+        .then(data => {
+          
+          console.log(data)
+          refreshIssues(data)
+        })
+      }
+    }) .catch(err => {
+      console.log(err)
+    })
+  }
+
+  const refreshIssues = (issues) => {
+    const container = document.getElementById('issueContainer');
+
+    container.innerHTML = '';
+  
+
+    issues.forEach(issue => {
+      switch (issue.type) {
+        case "Account and Access":
+          tag = "btn btn-warning"
+          break;
+        case "Service request":
+          tag = "btn btn-info"
+          break;
+        default:
+          tag = "btn btn-danger"
+          break;
+
+
+
+      }
+      const element = 
+      `
+      <div name="${issue.title}" class="issue ${issue.type.toLowerCase().replace(' ', '-')} ${issue.title} ${issue.id} mt-2">
+      <div class="card">
+    <h5 class="card-header"> ${issue.title}
+      ${issue.is_resolved == true ? '<span class="badge text-bg-success float-right">Resolved</span>' : "" }
+    </h5>
+    <div class="card-body">
+      <h5 class="card-title"><span class="badge ${tag}">${issue.type.toLowerCase()}</span></h5>
+      <p class="card-text">${issue.description}</p>
+      <button  class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updateModal" name="${issue.id}" onclick="onModalOpen(name)">Update</button>
+      ${page == "manage" && isAdmin == true && issue.is_resolved == false ?
+      `<button name="${issue.id}" onclick="onResolve(name)" class="btn btn-success">Resolve</button>`
+      :
+      ''
+    }
+    ${page == "manage" && isAdmin == true ?
+      `<button name="${issue.id}" onclick="onDelete(name)" class="btn btn-danger">Delete</button>`
+      :
+      ''
+    }
+      
+
+      <p class="float-right">Opened by: ${issue.user.email}</p>
+    </div>
+  
+</div>
+</div>
+</div>
+`
+      container.innerHTML += element;
+    })
+
+  }
+  const deleteUser = (id) => {
+    const alert = document.getElementById("updateIssueAlert");
+    var toast = document.getElementById("tostResponse");
+    var toastTitle = document.getElementById("toastTitle");
+    var toastBody = document.getElementById("toastBody");
+    var newToast = new bootstrap.Toast(toast);
+    fetch(`/api/auth/${id}`, {
+      method: "DELETE"
+    })
+    .then(res => {
+      switch (res.status) {
+        case 200:
+          getUsers()
+          toastTitle.textContent = "Success"
+          toastBody.textContent = "Successfully deleted user 😊"
+          newToast.show()
+          break;
+        case 404:
+          alert.setAttribute("class", "alert alert-danger")
+          toastTitle.textContent = "Error"
+          toastBody.textContent = "User already deleted by another admin"
+          newToast.show()
+          break;
+        case 403:
+          toastTitle.textContent = "Error"
+          toastBody.textContent = "User does not have necessary permission"
+          newToast.show()
+          break;
+
+      }
+    
+    }) .catch(err => {
+      console.log(err)
+    })
+  }
+
+  
+
+  const promote = (id) => {
+    const alert = document.getElementById("updateIssueAlert");
+    var toast = document.getElementById("tostResponse");
+    var toastTitle = document.getElementById("toastTitle");
+    var toastBody = document.getElementById("toastBody");
+    var newToast = new bootstrap.Toast(toast);
+    fetch(`/api/auth/promote/${id}`, {
+      method: "PATCH"
+    })
+    .then(res => {
+      switch (res.status) {
+        case 200:
+          getUsers()
+          toastTitle.textContent = "Success"
+          toastBody.textContent = "Successfully promoted user 😊"
+          newToast.show()
+          break;
+        case 404:
+          toastTitle.textContent = "Error"
+          toastBody.textContent = "User has been deleted by another admin"
+          newToast.show()
+          break;
+        case 403:
+          toastTitle.textContent = "Error"
+          toastBody.textContent = "User does not have necessary permission 🚫"
+          newToast.show()
+          break;
+        case 400:
+          toastTitle.textContent = "Error"
+          toastBody.textContent = "User is already an admin"
+          newToast.show()
+          break;
+      }
+    
+    }) .catch(err => {
+      console.log(err)
+    })
+}
+  const onModalOpen = (id) => {
+    const updateForm = document.getElementById("updateForm")
+    updateForm.setAttribute("issue-id", `${id}`)
+  }
+  document.getElementById("updateForm").addEventListener('submit', (event) => {
+
+    
+    event.preventDefault();
+    const alert = document.getElementById("updateIssueAlert");
+    var toast = document.getElementById("tostResponse");
+    var toastTitle = document.getElementById("toastTitle");
+    var toastBody = document.getElementById("toastBody");
+    var newToast = new bootstrap.Toast(toast);
+    const updateForm = document.getElementById("updateForm");
+    const id = updateForm.getAttribute("issue-id");
+    const formData = new FormData(event.target);
+    console.log(formData)
+
+    fetch(`/api/issues/${id}`, {
+      method: "PATCH",
+      body: formData
+    })
+    .then(res => {
+      console.log(res)
+      switch (res.status) {
+        case 200:
+          {page == "manage" ? getIssues() : getIssuesByUser()}
+          toastTitle.textContent = "Success"
+          toastBody.textContent = "Successfully updated issue 😊"
+          newToast.show()
+          break;
+        case 404:
+          toastTitle.textContent = "Error"
+          toastBody.textContent = "Issue already deleted by another admin"
+          newToast.show()
+          break; 
+      }
+
+
+    }).catch(err => {
+      console.log(err)
+        
+    })
+  })
+
+
+
+  const onDelete = (id) => {
+    var toast = document.getElementById("tostResponse");
+    var toastTitle = document.getElementById("toastTitle");
+    var toastBody = document.getElementById("toastBody");
+    var newToast = new bootstrap.Toast(toast);
+    const alert = document.getElementById("updateIssueAlert");
+    fetch(`/api/issues/${id}`, {
+      method: "DELETE"
+    })
+    .then(res => {
+      switch (res.status) {
+        case 200:
+          {page == "manage" ? getIssues() : getIssuesByUser()}
+          toastTitle.textContent = "Success"
+          toastBody.textContent = "Successfully deleted issue 😊"
+          newToast.show()
+          
+          break;
+        case 404:
+          toastTitle.textContent = "Error"
+          toastBody.textContent = "Issue already deleted by another admin"
+          newToast.show()
+          break; 
+        case 403:
+          toastTitle.textContent = "Error"
+          toastBody.textContent = "User does not have necessary permission"
+          newToast.show()
+          break; 
+
+      }
+
+
+    }).catch(err => {
+      console.log(err)
+        
+    })
+  }
+
+  const onResolve = (id) => {
+    var toast = document.getElementById("tostResponse");
+    var toastTitle = document.getElementById("toastTitle");
+    var toastBody = document.getElementById("toastBody");
+    var newToast = new bootstrap.Toast(toast);
+    const alert = document.getElementById("updateIssueAlert");
+    fetch(`/api/issues/resolve/${id}`, {
+      method: "PATCH"
+    })
+    .then(res => {
+      console.log(res)
+      switch (res.status) {
+        case 200:
+          {page == "manage" ? getIssues() : getIssuesByUser()}
+          toastTitle.textContent = "Success"
+          toastBody.textContent = "Successfully resolved issue 😊"
+          newToast.show()
+          break;
+        case 404:
+          toastTitle.textContent = "Error"
+          toastBody.textContent = "Issue already resolved by another admin"
+          newToast.show()
+          break; 
+        case 403:
+          toastTitle.textContent = "Error"
+          toastBody.textContent = "User does not have necessary permission"
+          newToast.show()
+          break; 
+
+      }
+
+
+    }).catch(err => {
+      console.log(err)
+        
+    })
+  }
+
+  
+  const onTypeFilter = () => {
+
+    var filterValue = event.target.value;
+    var container = document.querySelectorAll("#issueContainer .issue");
+    var allElementsHidden = 0;
+    for (i = 0; i < container.length; i++)
+    {
+      console.log(container[i].classList)
+      if(container[i].classList.contains(filterValue)) {
+        container[i].classList.remove("hidden")}
+
+      else container[i].classList.add("hidden")
+
+      if (container[i].classList.contains("hidden")) allElementsHidden += 1
+      else allElementsHidden -= 1
+      console.log(allElementsHidden)
+    }
+    console.log(container.length)
+    console.log(allElementsHidden, container.length)
+    if (allElementsHidden === container.length) {
+      console.log(allElementsHidden)
+    }
+
+  
+    
+  }
+  const onSearchFilter = () => {
+    var container = document.querySelectorAll("#issueContainer .issue");
+    console.log(event.target.value)
+    var currentValue = event.target.value.replace("-", " ").toLowerCase()
+    for (i = 0; i < container.length; i++)
+    {
+      console.log(currentValue,container[i].classList[2] )
+      if (currentValue != container[i].getAttribute("name")) container[i].classList.add("hidden")
+      else container[i].classList.remove("hidden")
+    }
+
+
+
+  }
+  const clearFilter = () => {
+    var container = document.querySelectorAll("#issueContainer .issue");
+    
+    for (i = 0; i < container.length; i++) container[i].classList.remove("hidden");
+    document.getElementById("typeFilter").value = ''
+    document.getElementById("searchFilter").value = ''
+  }
+</script>
+{% endblock %}

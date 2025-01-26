@@ -1,0 +1,25 @@
+<div class="card">
+    <h5 class="card-header"> {{element.email}}</h5>
+    <div class="card-body">
+      <h5 class="card-title">
+        {% if element.isAdmin == True%}
+        <span class="badge text-bg-info">Admin</span>
+        
+        {% else %}
+        <span class="badge text-bg-secondary ">User</span>
+        {% endif %}
+  </h5>
+      <p class="card-text mb-2">{{element.description}}</p>
+      
+      {% if role == True %}
+      <button  class="btn btn-danger"  name="{{element.id}}" onclick="deleteUser(name)">Delete</button>
+      {% if element.isAdmin == False%}
+      <button  class="btn btn-primary"  name="{{element.id}}" onclick="promote(name)">Promote to Admin</button>
+      {% endif %}
+      {% endif %}
+
+    </div>
+  
+</div>
+</div>
+

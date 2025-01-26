@@ -1,0 +1,27 @@
+{% extends "issues.html" %}
+
+{% block issueBlock %}
+{% for element in issues %}
+{% set titleFormatted = element.title.replace("-", "").lower()%}
+{% set formattedType = element.type.value.replace(" ", "-").lower() %}
+<div name="{{titleFormatted}}" class="issue {{formattedType}} {{ titleFormatted }} {{element.id}} mt-2">
+
+
+{% if formattedType == "account-and-access" %}
+    {% set tag = "btn btn-warning" %}
+{% elif formattedType == "service-request"  %}
+{% set tag = "btn btn-info" %}
+{% else %}
+{% set tag = "btn btn-danger" %}
+{% endif %}
+
+
+{% include "components/adminCard.html" %}
+
+{% endfor %} 
+{% endblock %}
+
+{% block title%}
+
+<h1 class="text-3xl">Tickets to review</h1>
+{% endblock %}

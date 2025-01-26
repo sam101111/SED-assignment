@@ -1,0 +1,34 @@
+{% extends "issues.html" %}
+
+{% block filters %}
+{% block title%}
+
+<h1 class="text-3xl">User Directory</h1>
+{% endblock %}
+
+{% endblock %}
+<div class="mt">
+
+</div>
+
+{% block issueBlock %}
+{% for element in users %}
+<div name="" class="issue {{element.name}} mt-2">
+
+
+{% if formattedType == "account-and-access" %}
+    {% set tag = "btn btn-warning" %}
+{% elif formattedType == "service-request"  %}
+{% set tag = "btn btn-info" %}
+{% else %}
+{% set tag = "btn btn-danger" %}
+{% endif %}
+
+
+{% include "components/userCard.html" %}
+
+{% endfor %} 
+{% endblock %}
+
+
+

@@ -1,0 +1,12 @@
+*.pyc
+*.pyo
+bin
+
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+todo.md
+.venv
+.pytest_cashe
+.vscode

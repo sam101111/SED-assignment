@@ -1,0 +1,31 @@
+<div>
+    <div class="alert alert-primary hidden" role="alert" id="updateIssueAlert">
+      text here lol
+    </div>
+    {% block title %}
+      <h1 class="text-3xl">Your tickets</h1>
+    {% endblock %}
+      
+      <div class="flex flex-row w-6/12 gap-2">
+          
+          <div>
+          <label for="typeFilter" class="form-label">Issue type</label>  
+          <select onchange="onTypeFilter()" class="form-select "  id="typeFilter" aria-label="Select a issue type" aria-placeholder="Select issue type" >
+          <option selected disabled value="">Pick issue type</option>
+          <option value="account-and-access">Account and Access</option>
+          <option value="bug">Bug</option>
+          <option value="incident-report">Incident report</option>
+          <option value="service-request">Service request</option>
+        </select>
+      </div>
+      <div>
+          <label for="searchFilter" class="form-label">Search for issue</label> 
+        <input onchange="onSearchFilter()" type="email" class="form-control" id="searchFilter" placeholder="Title of issue">
+      </div>
+
+      <button onclick="clearFilter()" class="btn btn-primary w-32 mt-8">Clear</button>
+
+          
+
+    </div>
+  </div>

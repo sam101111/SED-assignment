@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Help desk</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+        <script src=
+        "https://unpkg.com/ionicons@4.5.10-0/dist/ionicons.js">
+</script>
+
+
+</head>
+
+<body>
+    <iframe id="preventRedirect" class="hidden"></iframe>
+    {% if request.headers.cookie %}
+    {%set sessionStatus = "Logout" %}
+    {%set sessionStatusUrl = "/api/auth/logout" %}
+
+    {% else %}
+    {% set sessionStatus = "Login" %}
+    {% set sessionStatusUrl = "/login" %}
+    {% endif %}
+    {% set navElements = [{"title": "Create ticket", "url": "/"}, {"title": "Your tickets", "url": "/issues"},
+    {"title": "Manage tickets", "url": "/manage"}, {"title": "User Directory", "url": "/directory"} , {"title": "Register", "url": "/register"} ,{"title":
+    sessionStatus, "url": sessionStatusUrl }]%}
+    
+    <div class="flex flex-col h-screen w-screen">
+
+    <header class="bg-[#7079D9] py-4">
+        <nav class="flex justify-between 
+                    items-center w-[92%]  mx-auto text-white ">
+            <div class="">
+                <h1 class="text-3xl mx-10 text-white"><a href="{{navElements[0].url}}">Help Desk Centre 🆘</a></h1>
+            </div>
+            <div class="nav-links z-1 duration-500 md:static 
+                        absolute md:min-h-fit min-h-[60vh] 
+                        left-0 top-[-100%] md:w-auto  w-full 
+                        flex items-center px-5 ">
+                <ul class="flex md:flex-row flex-col 
+                           md:items-center md:gap-[4vw] gap-8">
+                           <iframe id="preventRedirect2" class="hidden"></iframe>
+                           {% for element in navElements %}
+                            {% if element.title == "Logout" %}
+        
+                            <li class="p-2 m-2 text-lg cursor-pointer duration-300 hover:text-[#D3D3D3] ">
+                                <form  target="preventRedirect2" id="logoutForm">
+                                    <button type="submit">{{element.title}}</button>
+                                </form>
+                            </li>
+                            {% elif element.title == "Register" %}
+                            <li class="p-2 m-2 text-lg cursor-pointer duration-300 hover:text-[#D3D3D3] ">
+                                    <button type="submit" onclick="logout()">{{element.title}}</button>
+             
+                            </li>
+
+
+                            {% else %}
+                           <li>
+                            <a class="p-2 m-2 text-lg  cursor-pointer duration-300 hover:text-[#D3D3D3] " href={{element.url}}>{{element.title}}</a>
+                        </li>
+                            {% endif %}
+
+                            {% endfor %}
+
+                </ul>
+            </div>
+            <div class="flex items-center gap-6">
+                <ion-icon onclick="onToggleMenu(this)" name="menu" class="text-3xl cursor-pointer 
+                                             md:hidden text-white ">
+                </ion-icon>
+            </div>
+        </nav>
+    </header>
+    <script>
+        const navLinks = document.querySelector('.nav-links')
+        const navItems = document.querySelectorAll('.nav-links ul li a')
+        function onToggleMenu(e) {
+            e.name = e.name === 'menu' ? 'close' : 'menu'
+            navLinks.classList.toggle('top-[6%]')
+            navLinks.classList.toggle('bg-[#7079D9]')
+        }
+    </script>
+
+
+    <div class="flex-1 flex justify-center items-center mt-8 ">
+        
+        
+        {% block content%}
+
+        {% endblock %}
+
+    </div>
+</div>
+
+    <div id="logoutToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <img src="..." class="rounded me-2" alt="...">
+            <strong class="me-auto">Bootstrap</strong>
+            <small>11 mins ago</small>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            Hello, world! This is a toast message.
+        </div>
+        <script>
+            document.getElementById("logoutForm").addEventListener('submit', (event) => {
+                event.preventDefault();
+                const formData = new FormData(event.target)
+                const logoutToast = document.getElementById("logoutToast")
+                const toastInstance = bootstrap.Toast.getOrCreateInstance(logoutToast)
+                fetch('/api/auth/logout', {
+                    method: "POST"
+                })
+                    .then(res => {
+                        window.location.replace("/login");
+
+                    })
+                    .catch(err => {
+                        console.log(err)
+                    })
+            })
+
+            const logout = () => {
+                event.preventDefault();
+                const logoutToast = document.getElementById("logoutToast")
+                const toastInstance = bootstrap.Toast.getOrCreateInstance(logoutToast)
+                fetch('/api/auth/logout', {
+                    method: "POST"
+                })
+                    .then(res => {
+                        window.location.replace("/register");
+
+                    })
+                    .catch(err => {
+                        console.log(err)
+                    })
+            }
+        </script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+
+
+<form class="flex flex-col gap-3 w-5/12" target="preventRedirect"  id="createIssue">
+  <div class="alert alert-primary hidden" role="alert" id="createIssueAlert">
+    text here lol
+  </div>
+    <h1 class="text-3xl text-center">Have an issue ? submit a ticket here</h1>
+ 
+    
+    <div class="input-group">
+        
+            <select class="form-select w-2" name="type" aria-label="Select an issue type" aria-placeholder="Select issue type" required>
+                <option selected disabled value="">Pick issue type</option>
+            <option value="Account and Access">Account and Access</option>
+            <option value="Bug">Bug</option>
+            <option value="Incident report">Incident report</option>
+            <option value="Service request">Service request</option>
+          </select>
+      
+        <input type="text" name="title" class="form-control" aria-label="more info input" placeholder="What issue are you having ?" required>
+      </div>
+      <textarea class="form-control" name="description"  placeholder="Add more detail about the issue here" rows="3" required></textarea>
+      <button type="submit" class="btn btn-primary">Submit</button>
+  
+    </form>
+
+    <script>
+      document.getElementById("createIssue").addEventListener('submit', (event) => {
+        event.preventDefault();
+        const alert = document.getElementById("createIssueAlert")
+        const formData = new FormData(event.target);
+        fetch('/api/issues', {
+          method: 'POST',
+          body: formData,
+        })
+        .then(res => {
+          console.log(res)
+          if (res.status == 200) {
+            alert.setAttribute("class", "alert alert-success")
+            alert.textContent="Successfully created issue"
+
+          } else {
+            switch (res.status) {
+              case 401:
+                alert.setAttribute("class", "alert alert-danger")
+                alert.textContent="Please login to create an issue"
+                break;
+              case 422:
+                alert.setAttribute("class", "alert alert-danger")
+                alert.textContent="Please enter all required felids"
+                break;
+            }
+          }
+        })
+
+      })
+ 
+    </script>
+{% endblock %}

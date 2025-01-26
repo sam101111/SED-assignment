@@ -1,0 +1,26 @@
+<div class="card">
+    <h5 class="card-header"> {{element.title}} 
+      {% if element.is_resolved == True%}
+        <span class="badge text-bg-success float-right">Resolved</span>
+      {% endif %}
+    </h5>
+    <div class="card-body">
+      <h5 class="card-title"><span class="badge {{tag}}">{{element.type.replace("-", " ")}}</span></h5>
+      <p class="card-text mb-2">{{element.description}}</p>
+      <button  class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updateModal" name="{{element.id}}" onclick="onModalOpen(name)">Update</button>
+      {% set issueId = element.id %}
+      {% if element.is_resolved == False%}
+      <button name="{{issueId}}" onclick="onResolve(name)" class="btn btn-success">Resolve</button>
+      {% endif %}
+      <button name="{{issueId}}" onclick="onDelete(name)" class="btn btn-danger">Delete</button>
+      
+   
+     
+      {% block adminButton%}
+   
+      {% endblock %}
+      <p class="float-right">Opened by: {{element.user.email}}</p>
+    </div>
+  
+</div>
+</div>
