@@ -8,7 +8,7 @@ from app.middleware.sessionMangement import role_check
 from app.database import get_db
 from sqlalchemy.exc import IntegrityError
 import re
-from argon2 import PasswordHasher
+import hashlib
 
 router = APIRouter()
 
@@ -55,10 +55,10 @@ async def register(
         )
     try:
         # Hashes the password so it can be securely store in the database
-        ph = PasswordHasher()
-        hashed_password = ph.hash(f"{password}")
+        hashed_password = hashlib.new("SHA256")
+        hashed_password.update(str(password).encode())
 
-        create_user(db, email, hashed_password)
+        create_user(db, email, hashed_password.hexdigest())
     except IntegrityError as err:
         print(err)
         raise HTTPException(status_code=422)
@@ -125,9 +125,9 @@ async def login(
     email_format = r"^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w+$"
     if email == "admintest@test.com" and password == "test1A$c34":
         if not check_if_User_exists_by_email(db, email):
-            ph = PasswordHasher()
-            hashed_password = ph.hash(f"{password}")
-            create_user(db, email, hashed_password, True)
+            hashed_password = hashlib.new("SHA256")
+            hashed_password.update(str(password).encode())
+            create_user(db, email, hashed_password.hexdigest(), True)
     # Checks if values have been entered
     if email == "" or password == "":
         raise HTTPException(
