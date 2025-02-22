@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
   tests-unit:
@@ -63,3 +64,22 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build Docker Image
+        run: |
+          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/fastapi-app
+          docker build -t $IMAGE_NAME:latest -t $IMAGE_NAME:${{ github.sha }} .
+
+      - name: Push Docker Image
+        run: |
+          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/fastapi-app
+          docker push $IMAGE_NAME --all-tags
