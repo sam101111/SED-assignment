@@ -99,11 +99,10 @@ jobs:
 
   zap-scan:
     runs-on: ubuntu-latest
-    needs: build  # This ensures zap-scan runs after the build job completes
+    needs: build
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
 
       - name: Pull FastAPI Docker Image
         run: |
@@ -113,14 +112,21 @@ jobs:
         run: |
           docker run -d -p 8000:8000 --name fastapi-container ghcr.io/${{ github.repository_owner }}/fastapi-app:latest
 
-      - name: Set permissions on the working directory
+      - name: Wait for FastAPI to be ready
+        run: |
+          until curl --silent --fail http://localhost:8000; do
+            echo "Waiting for FastAPI to be available..."
+            sleep 5
+          done
+
+      - name: Adjust permissions
         run: |
           chmod -R 777 $PWD
 
       - name: Run ZAP scanner
         run: |
           docker pull ghcr.io/zaproxy/zaproxy:stable
-          docker run --rm --user root --link fastapi-container:fastapi -v $PWD:/zap/wrk:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://localhost:8000
+          docker run --rm -u zaproxy --link fastapi-container:fastapi -v $PWD:/zap/wrk:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://localhost:8000
 
       - name: Stop FastAPI container
         run: |
