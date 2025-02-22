@@ -2,7 +2,7 @@ name: Python application
 
 on:
   push:
-    branches: [ "**" ]
+    branches: [ "main" ]
   pull_request:
     branches: [ "**" ]
 
@@ -37,12 +37,14 @@ jobs:
       packages: read
       actions: read
       contents: read
+
     strategy:
       fail-fast: false
       matrix:
         include:
-          - language: python
-            build-mode: none
+        - language: python
+          build-mode: none
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -52,15 +54,7 @@ jobs:
       with:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
-    - if: matrix.build-mode == 'manual'
-      shell: bash
-      run: |
-        echo 'If you are using a "manual" build mode for one or more of the' \
-          'languages you are analyzing, replace this with the commands to build' \
-          'your code, for example:'
-        echo '  make bootstrap'
-        echo '  make release'
-        exit 1
+
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
       with:
@@ -89,12 +83,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
       - name: Build Docker Image
         run: |
           IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/fastapi-app
           docker build -t $IMAGE_NAME:latest -t $IMAGE_NAME:${{ github.sha }} .
+
       - name: Push Docker Image
         run: |
           IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/fastapi-app
@@ -107,6 +104,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+
       - name: Pull FastAPI Docker Image
         run: |
           docker pull ghcr.io/${{ github.repository_owner }}/fastapi-app:latest
@@ -115,10 +113,14 @@ jobs:
         run: |
           docker run -d -p 8000:8000 --name fastapi-container ghcr.io/${{ github.repository_owner }}/fastapi-app:latest
 
+      - name: Set permissions on the working directory
+        run: |
+          chmod -R 777 $PWD
+
       - name: Run ZAP scanner
         run: |
           docker pull ghcr.io/zaproxy/zaproxy:stable
-          docker run --rm --link fastapi-container:fastapi -v $PWD:/zap/wrk:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://localhost:8000
+          docker run --rm --user root --link fastapi-container:fastapi -v $PWD:/zap/wrk:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://localhost:8000
 
       - name: Stop FastAPI container
         run: |
