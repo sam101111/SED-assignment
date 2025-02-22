@@ -2,7 +2,6 @@ from sqlalchemy.orm import Session
 from app.models.Userdb import User as UserDb
 from app.schemas.user import *
 from sqlalchemy.sql import exists
-import hashlib
 from argon2 import PasswordHasher
 
 
