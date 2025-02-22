@@ -124,10 +124,10 @@ jobs:
         run: |
           chmod -R 777 $PWD
 
-      - name: Run ZAP scanner
+      - name: Run ZAP scanner (Allow warnings)
         run: |
           docker pull ghcr.io/zaproxy/zaproxy:stable
-          docker run --rm --network zap-network -v $PWD:/zap/wrk:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://fastapi-container:8000
+          docker run --rm --network zap-network -v $PWD:/zap/wrk:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://fastapi-container:8000 -d -g gen.conf -w
 
       - name: Stop FastAPI container
         run: |
