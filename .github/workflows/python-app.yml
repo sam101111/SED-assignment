@@ -126,7 +126,7 @@ jobs:
       - name: Run ZAP scanner
         run: |
           docker pull ghcr.io/zaproxy/zaproxy:stable
-          docker run --rm -u zaproxy --link fastapi-container:fastapi -v $PWD:/zap/wrk:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://localhost:8000
+          docker run --rm --link fastapi-container:fastapi -v $PWD:/zap/wrk:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://localhost:8000
 
       - name: Stop FastAPI container
         run: |
