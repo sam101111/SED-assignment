@@ -3,6 +3,7 @@ from app.models.Userdb import User as UserDb
 from app.schemas.user import *
 from sqlalchemy.sql import exists
 import hashlib
+from argon2 import PasswordHasher
 
 
 def create_user(db: Session, email: str, password: str, isAdmin: bool = False):
@@ -46,7 +47,9 @@ def check_if_User_exists_by_email(db: Session, email: str):
 
 def check_password(db: Session, password: str, email: str):
     user = db.query(UserDb).filter(UserDb.email == email).first()
-    if user.password == hashlib.sha256(password.encode()).hexdigest():
+    ph = PasswordHasher()
+ 
+    if ph.verify(f"{user.password}", f"{password}"):
         return True
     else:
         return False
