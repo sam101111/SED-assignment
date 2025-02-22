@@ -110,13 +110,14 @@ jobs:
 
       - name: Run FastAPI container
         run: |
-          docker run -d -p 8000:8000 --name fastapi-container ghcr.io/${{ github.repository_owner }}/fastapi-app:latest
+          docker network create zap-network || true  # Create the network if it doesn't exist
+          docker run -d --name fastapi-container --network zap-network -p 8000:8000 ghcr.io/${{ github.repository_owner }}/fastapi-app:latest
 
       - name: Wait for FastAPI to be ready
         run: |
           until curl --silent --fail http://localhost:8000; do
             echo "Waiting for FastAPI to be available..."
-            sleep 5
+            sleep 10  # Increased wait time for better reliability
           done
 
       - name: Adjust permissions
@@ -126,7 +127,7 @@ jobs:
       - name: Run ZAP scanner
         run: |
           docker pull ghcr.io/zaproxy/zaproxy:stable
-          docker run --rm --link fastapi-container:fastapi -v $PWD:/zap/wrk:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://localhost:8000
+          docker run --rm --network zap-network -v $PWD:/zap/wrk:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://fastapi-container:8000
 
       - name: Stop FastAPI container
         run: |
