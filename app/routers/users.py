@@ -47,7 +47,7 @@ async def register(
 
     if (
         # Checks if email or password is in the wrong format
-        re.match(email_format, email) == None
+        not is_valid_email(email)
         or re.match(password_format, password) == None
     ):
         raise HTTPException(
@@ -134,7 +134,7 @@ async def login(
             status_code=400, detail="Email or password entered is not valid format"
         )
 
-    if re.match(email_format, email) == None:
+    if not is_valid_email(email):
         raise HTTPException(status_code=400, detail="Email entered is not valid format")
     if not check_if_User_exists_by_email(db, email):
         raise HTTPException(status_code=404, detail="Email does not exist in system")
