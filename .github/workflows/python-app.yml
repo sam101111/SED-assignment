@@ -123,7 +123,7 @@ jobs:
         run: |
           until curl --silent --fail http://localhost:8000; do
             echo "Waiting for FastAPI to be available..."
-            sleep 10  # Increased wait time for better reliability
+            sleep 10
           done
 
       - name: Adjust permissions
