@@ -1,6 +1,3 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
-
 name: Python application
 
 on:
@@ -11,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
   tests-unit:
@@ -25,24 +23,42 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 pytest pytest uvicorn sqlalchemy httpx fastapi jinja2 python-multipart pytest-playwright
+        pip install flake8 pytest pytest uvicorn sqlalchemy httpx fastapi jinja2 python-multipart pytest-playwright argon2-cffi
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Run unit tests
       run: |
         pytest -k "unit"
 
-  codeql-analysis:
-    runs-on: ubuntu-latest
-    permissions: write-all
+  code-ql:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - language: python
+          build-mode: none
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: 'javascript,python'
-      - name: Perform CodeQL analysis
-        uses: github/codeql-action/analyze@v3
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        build-mode: ${{ matrix.build-mode }}
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"
 
   lint:
     runs-on: ubuntu-latest
@@ -59,7 +75,67 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with flake8
       run: |
-        # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Set environment variables
+        run: |
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          SAFE_BRANCH_NAME=$(echo "$BRANCH_NAME" | tr '/' '-')
+          echo "SAFE_BRANCH_NAME=$SAFE_BRANCH_NAME" >> $GITHUB_ENV
+          echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/fastapi-app" >> $GITHUB_ENV
+
+      - name: Build Docker Image
+        run: |
+          docker build -t $IMAGE_NAME:latest \
+                       -t $IMAGE_NAME:${{ github.sha }} \
+                       -t $IMAGE_NAME:$SAFE_BRANCH_NAME .
+
+      - name: Push Docker Image
+        run: docker push $IMAGE_NAME --all-tags
+
+  zap-scan:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Pull FastAPI Docker Image
+        run: |
+          docker pull ghcr.io/${{ github.repository_owner }}/fastapi-app:latest
+
+      - name: Run FastAPI container
+        run: |
+          docker network create zap-network || true  # Create the network if it doesn't exist
+          docker run -d --name fastapi-container --network zap-network -p 8000:8000 ghcr.io/${{ github.repository_owner }}/fastapi-app:latest
+
+      - name: Wait for FastAPI to be ready
+        run: |
+          until curl --silent --fail http://localhost:8000; do
+            echo "Waiting for FastAPI to be available..."
+            sleep 10
+          done
+
+      - name: Adjust permissions
+        run: |
+          chmod -R 777 $PWD
+
+      - name: Run ZAP scanner
+        run: |
+          docker pull ghcr.io/zaproxy/zaproxy:stable
+          docker run --rm --network zap-network -v $PWD:/zap/wrk:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://fastapi-container:8000 -d -g gen.conf -I -w /zap/wrk/zap_wiki_report.md
+
+
+      - name: Stop FastAPI container
+        run: |
+          docker stop fastapi-container

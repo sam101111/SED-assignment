@@ -10,7 +10,7 @@ pip install -r requirements.txt
 
 ## Running the application locally
 > [!CAUTION]
-> This application requires Python 3.11+, it is highly suggested to use Python 3.12.4
+> This application requires Python 3.12, it is highly suggested to use Python 3.12.4. Do not use 3.13.
 
 to run a local instance of the application you can run the following command in the root of the project:
 

@@ -78,6 +78,46 @@ def test_create_issue(test_db, login_user):
     )
     assert response.status_code == 200
 
+def test_XSS_attack_on_issue_title(test_db, login_user):
+    xss_payload = "<script>alert('XSS')</script>"
+
+    issue = client.post(
+        "/api/issues",
+        data={
+            "title": xss_payload,
+            "type": "Bug",
+            "description": "really good test issue",
+        },
+    )
+
+    assert issue.status_code == 200, f"Unexpected status code: {issue.status_code}, Response: {issue.text}"
+
+    issue_response = issue.json()
+    issue_id = issue_response
+    assert issue_id is not None, "Issue ID is None or invalid"
+
+    # Get user ID
+    get_id = client.post("/api/auth/getid", data={"email": "test2@test.com"})
+    assert get_id.status_code == 200, f"Failed to retrieve user ID: {get_id.text}"
+
+    user_id = get_id.content.decode().replace('"', "")
+
+    # Fetch issues for the user
+    response = client.get(f"/api/issues/{user_id}")
+    assert response.status_code == 200, f"Unexpected status code: {response.status_code}, Response: {response.text}"
+
+    response_data = response.json()
+    assert response_data, "Response data is empty"
+
+    # Ensure the issue exists in the response
+    issue_data = next((i for i in response_data if i["id"] == issue_id), None)
+    assert issue_data, "Issue not found in response"
+
+    assert issue_data["title"] == xss_payload, "XSS payload was modified or escaped incorrectly"
+    assert "<script>" in issue_data["title"], "Script tags were removed (sanitization may be too aggressive)"
+    
+    print("XSS test passed: Input was stored safely as a string")
+
 
 def test_create_issue_bad_type(test_db, login_user):
     response = client.post(
