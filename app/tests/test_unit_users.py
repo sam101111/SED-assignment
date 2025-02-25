@@ -105,6 +105,17 @@ def test_sql_injection_login(test_db):
     assert response.status_code == 400
 
 
+def test_redos_email_validation(test_db):
+    # anything more than 998 charecter, should throw a 400
+    # as stated in the RFC5322 standard
+    malicious_email = "a" * 10000 + "@test.com"
+    
+    response = client.post(
+        "/api/auth/register", data={"email": malicious_email, "password": "SecureTest1!!"}
+    )
+    
+    assert response.status_code == 400
+
 def test_register_user_with_no_data(test_db):
     response = client.post("/api/auth/register", data={"email": "", "password": ""})
     assert response.status_code == 422
