@@ -1,0 +1,18 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["Help Desk Pipeline"]
+    types:
+      - completed
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: JorgeLNJunior/render-deploy@v1.4.5
+        with:
+          service_id: ${{ secrets.RENDER_SERVICE_ID }}
+          api_key: ${{ secrets.RENDER_API_KEY }}
