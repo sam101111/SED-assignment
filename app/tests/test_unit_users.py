@@ -95,6 +95,15 @@ def test_register_user_with_bad_email(test_db):
     )
     assert response.status_code == 400
 
+def test_sql_injection_login(test_db):
+
+    response = client.post(
+        "/api/auth/login", data={"email": "test@test.com' OR '1'='1", "password": "password' OR '1'='1"}
+    )
+
+    # Expecting 400 Bad Request to be thrown
+    assert response.status_code == 400
+
 
 def test_register_user_with_no_data(test_db):
     response = client.post("/api/auth/register", data={"email": "", "password": ""})
