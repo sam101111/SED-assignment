@@ -1,4 +1,4 @@
-name: Python application
+name: Help Desk Pipeline
 
 on:
   push:
