@@ -1,3 +1,4 @@
+from argon2 import PasswordHasher
 from fastapi import APIRouter, Cookie, Request, Depends, HTTPException, Response, Form
 from typing import Annotated, Optional
 from fastapi.responses import HTMLResponse
@@ -38,8 +39,8 @@ async def register(
     password: Annotated[str, Form()],
     db: Session = Depends(get_db),
 ):
-    email_format = r"^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w+$"
     password_format = r"^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*\W)(?!.* ).{8,16}$"
+    ph = PasswordHasher()
     if email == "" or password == "":
         raise HTTPException(
             status_code=400, detail="Email or password entered is not valid format"
@@ -47,18 +48,16 @@ async def register(
 
     if (
         # Checks if email or password is in the wrong format
-        re.match(email_format, email) == None
+        not is_valid_email(email)
         or re.match(password_format, password) == None
     ):
         raise HTTPException(
             status_code=400, detail="Email or password entered is not valid format"
         )
     try:
-        # Hashes the password so it can be securely store in the database
-        hashed_password = hashlib.new("SHA256")
-        hashed_password.update(str(password).encode())
 
-        create_user(db, email, hashed_password.hexdigest())
+        hashed_password = ph.hash(password)
+        create_user(db, email, hashed_password)
     except IntegrityError as err:
         print(err)
         raise HTTPException(status_code=422)
@@ -122,24 +121,23 @@ async def login(
     password: Annotated[str, Form()],
     db: Session = Depends(get_db),
 ):
-    email_format = r"^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w+$"
+    ph = PasswordHasher()
     if email == "admintest@test.com" and password == "test1A$c34":
         if not check_if_User_exists_by_email(db, email):
-            hashed_password = hashlib.new("SHA256")
-            hashed_password.update(str(password).encode())
-            create_user(db, email, hashed_password.hexdigest(), True)
+            hashed_password = ph.hash(f"{password}")
+            create_user(db, email, hashed_password, True)
     # Checks if values have been entered
     if email == "" or password == "":
         raise HTTPException(
             status_code=400, detail="Email or password entered is not valid format"
         )
 
-    if re.match(email_format, email) == None:
+    if not is_valid_email(email):
         raise HTTPException(status_code=400, detail="Email entered is not valid format")
     if not check_if_User_exists_by_email(db, email):
         raise HTTPException(status_code=404, detail="Email does not exist in system")
 
-    if check_password(db, password, email) == False:
+    if not check_password(db, password, email):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
 
     # Creates a new session with the user_id of the person logging in, and then adds it to cookies

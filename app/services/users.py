@@ -3,6 +3,8 @@ from app.models.Userdb import User as UserDb
 from app.schemas.user import *
 from sqlalchemy.sql import exists
 import hashlib
+from email_validator import validate_email, EmailNotValidError
+from argon2 import PasswordHasher
 
 
 def create_user(db: Session, email: str, password: str, isAdmin: bool = False):
@@ -45,11 +47,18 @@ def check_if_User_exists_by_email(db: Session, email: str):
 
 
 def check_password(db: Session, password: str, email: str):
-    user = db.query(UserDb).filter(UserDb.email == email).first()
-    if user.password == hashlib.sha256(password.encode()).hexdigest():
-        return True
-    else:
+    try:
+        user = db.query(UserDb).filter(UserDb.email == email).first()
+        ph = PasswordHasher()
+        if  ph.verify(user.password,password):
+            print("True")
+            return True
+        else:
+            print("False")
+            return False
+    except:
         return False
+
 
 
 def get_id_by_email(db: Session, email: str):
@@ -60,3 +69,10 @@ def get_id_by_email(db: Session, email: str):
 def get_role_by_id(db: Session, id: str):
     user = db.query(UserDb).filter(UserDb.id == id).first()
     return user.isAdmin
+
+def is_valid_email(email: str) -> bool:
+    try:
+        validate_email(email, check_deliverability=False)
+        return True
+    except EmailNotValidError:
+        return False
