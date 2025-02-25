@@ -1,4 +1,4 @@
-name: Help Desk Pipeline
+name: pipeline
 
 on:
   push:
