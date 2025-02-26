@@ -2,6 +2,7 @@ from argon2 import PasswordHasher
 from fastapi import APIRouter, Cookie, Request, Depends, HTTPException, Response, Form
 from typing import Annotated, Optional
 from fastapi.responses import HTMLResponse
+from app.config import config
 from app.services.users import *
 from app.services.sessions import *
 from app.schemas.user import *
@@ -144,7 +145,7 @@ async def login(
     # Adding the sessionID to cookies automatically adds the sessionID as a header to every request until the cookie is removed
     # Thus making it an effective way to easily identify a user securely
     response.set_cookie(
-        key="sessionID", value=f"{create_session(db, get_id_by_email(db, email))}"
+        key="sessionID", value=f"{create_session(db, get_id_by_email(db, email))}", secure=config.SECURE_COOKIES
     )
 
     return {"message": "Session has been successfully created"}
