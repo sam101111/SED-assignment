@@ -147,7 +147,7 @@ async def login(
     # Creates a new session with the user_id of the person logging in, and then adds it to cookies
     # Adding the sessionID to cookies automatically adds the sessionID as a header to every request until the cookie is removed
     # Thus making it an effective way to easily identify a user securely
-    SECURE_COOKIES = os.environ.get("COOKIES", "false").strip().lower() in ["true"]
+    SECURE_COOKIES = os.environ.get("COOKIES", "false").strip().lower() == "true"
     print("secure cookies log", SECURE_COOKIES  )
     response.set_cookie(
         key="sessionID", value=f"{create_session(db, get_id_by_email(db, email))}", secure=SECURE_COOKIES
