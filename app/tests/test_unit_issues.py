@@ -61,7 +61,6 @@ def login_admin():
     response = client.post("/api/auth/logout", headers=headers)
     assert response.status_code == 200
 
-
 app.dependency_overrides[get_db] = override_get_db
 
 client = TestClient(app)
