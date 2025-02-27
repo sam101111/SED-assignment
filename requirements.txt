@@ -10,7 +10,7 @@ charset-normalizer==3.3.2
 click==8.1.7
 colorama==0.4.6
 coverage==7.6.10
-cryptography==43.0.0
+cryptography==44.0.1
 dnspython==2.6.1
 ecdsa==0.19.0
 email_validator==2.2.0
