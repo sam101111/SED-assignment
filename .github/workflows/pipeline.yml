@@ -144,7 +144,11 @@ jobs:
           docker stop fastapi-container
   test-e2e:
     timeout-minutes: 60
+    needs: build
     runs-on: ubuntu-latest
+    services: 
+      app:
+        image: help-desk-app-assignment:latest
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
