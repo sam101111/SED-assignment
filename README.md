@@ -1,5 +1,5 @@
-# Software engineering & agile assignment
-For the Software engineering And Agile assignment I have created a help desk where users can raise different types of issues which can then be reviewed by administrators. As specified in the brief, admins have full CRUD while users can only read,write and update. For privacy and security, users can only view their own issues they have raised while admins can view all issues and delete them if needed.
+# Software engineering & DevOps assignment
+For the Software engineering And DevOps assignment I have created a help desk where users can raise different types of issues which can then be reviewed by administrators. As specified in the brief, admins have full CRUD while users can only read,write and update. For privacy and security, users can only view their own issues they have raised while admins can view all issues and delete them if needed.
 
 ## installation
 to run the application a few third party packages need to be installed, run the command bellow in the root directory:
