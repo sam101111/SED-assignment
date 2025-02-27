@@ -4,7 +4,6 @@ description: Install Python application dependencies
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@v4
     - name: Set up Python 3.12.4
       uses: actions/setup-python@v3
       with:
