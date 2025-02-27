@@ -2,7 +2,6 @@ from argon2 import PasswordHasher
 from fastapi import APIRouter, Cookie, Request, Depends, HTTPException, Response, Form
 from typing import Annotated, Optional
 from fastapi.responses import HTMLResponse
-from app.config import config
 from app.services.users import *
 from app.services.sessions import *
 from app.schemas.user import *
@@ -11,6 +10,8 @@ from app.database import get_db
 from sqlalchemy.exc import IntegrityError
 import re
 import hashlib
+import os
+from dotenv import load_dotenv
 
 router = APIRouter()
 
@@ -122,6 +123,8 @@ async def login(
     password: Annotated[str, Form()],
     db: Session = Depends(get_db),
 ):
+    if os.environ.get("RENDER") is None:
+        load_dotenv()
     ph = PasswordHasher()
     if email == "admintest@test.com" and password == "test1A$c34":
         if not check_if_User_exists_by_email(db, email):
@@ -144,8 +147,10 @@ async def login(
     # Creates a new session with the user_id of the person logging in, and then adds it to cookies
     # Adding the sessionID to cookies automatically adds the sessionID as a header to every request until the cookie is removed
     # Thus making it an effective way to easily identify a user securely
+    SECURE_COOKIES = os.environ.get("COOKIES", "false").strip().lower() in ["true"]
+    print("secure cookies log", SECURE_COOKIES  )
     response.set_cookie(
-        key="sessionID", value=f"{create_session(db, get_id_by_email(db, email))}", secure=config.SECURE_COOKIES
+        key="sessionID", value=f"{create_session(db, get_id_by_email(db, email))}", secure=SECURE_COOKIES
     )
 
     return {"message": "Session has been successfully created"}
