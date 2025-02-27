@@ -148,7 +148,9 @@ jobs:
     runs-on: ubuntu-latest
     services: 
       app:
-        image: help-desk-app-assignment:latest
+        image: ghcr.io/${{ github.repository_owner }}/help-desk-app-assignment:latest
+        ports:
+          - 8000:8000
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
