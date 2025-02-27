@@ -15,16 +15,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python 3.12.4
-      uses: actions/setup-python@v3
-      with:
-        python-version: "3.12.4"
+    - name: Checkout repository
+      uses: actions/checkout@v4
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install flake8 pytest pytest uvicorn sqlalchemy httpx fastapi jinja2 python-multipart pytest-playwright argon2-cffi
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      uses: ./.github/actions/install-dependencies
     - name: Run unit tests
       run: |
         pytest -k "unit"
@@ -59,20 +53,14 @@ jobs:
       uses: github/codeql-action/analyze@v3
       with:
         category: "/language:${{matrix.language}}"
-
+        
   lint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python 3.12.4
-      uses: actions/setup-python@v3
-      with:
-        python-version: "3.12.4"
+    - name: Checkout repository
+      uses: actions/checkout@v4
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install flake8 pytest pytest uvicorn sqlalchemy httpx fastapi jinja2 python-multipart pytest-playwright
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      uses: ./.github/actions/install-dependencies
     - name: Lint with flake8
       run: |
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
