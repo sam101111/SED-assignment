@@ -153,10 +153,6 @@ jobs:
           - 8000:8000
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
     - name: Install dependencies
       uses: ./.github/actions/install-dependencies
     - name: Ensure browsers are installed
