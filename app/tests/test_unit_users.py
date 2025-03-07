@@ -106,7 +106,7 @@ def test_sql_injection_login(test_db):
 
 
 def test_redos_email_validation(test_db):
-    # anything more than 998 charecter, should throw a 400
+    # anything more than 998 character, should throw a 400
     # as stated in the RFC5322 standard
     malicious_email = "a" * 10000 + "@test.com"
     

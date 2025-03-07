@@ -90,6 +90,7 @@ async def manage_page(
 ):
     context = {"request": req}
     try:
+        # SessionID is obtained via cookies
         is_admin = role_check(True, sessionID, db)
         # This check insures only admin users are able to access this site
         if is_admin:
@@ -102,9 +103,10 @@ async def manage_page(
                 "page": "manage",
                 "user_id": user_id,
             }
-
+            # returns the admin page
             return templates.TemplateResponse("manage.html", context)
         else:
+            # If the user is not an admin they will be taken to the unauthorised page
             return templates.TemplateResponse("unauthorised.html", context)
     except:
         return templates.TemplateResponse("unauthorised.html", context)
