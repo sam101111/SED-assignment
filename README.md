@@ -21,7 +21,7 @@ uvicorn app.main:app --reload
 > [!CAUTION]
 > The application may cold start and take a few minutes to be accessible due to the limitations of the free plan on the provider.
 
-The application is deployed on: https://sea-assignment-help-desk.onrender.com/register
+The application is deployed on: https://help-desk-app-assignment.onrender.com/login
 
 ## testing
 Within this project both End-2-End and unit tests have been created.

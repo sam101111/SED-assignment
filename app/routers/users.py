@@ -145,8 +145,7 @@ async def login(
     # Adding the sessionID to cookies automatically adds the sessionID as a header to every request until the cookie is removed
     # Thus making it an effective way to easily identify a user securely
     response.set_cookie(
-        key="sessionID", value=f"{create_session(db, get_id_by_email(db, email))}", secure=config.SECURE_COOKIES
-    )
+        key="sessionID", value=f"{create_session(db, get_id_by_email(db, email))}", secure=config.SECURE_COOKIES)
 
     return {"message": "Session has been successfully created"}
 
